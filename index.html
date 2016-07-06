@@ -12,6 +12,14 @@
     <link href="css/bootstrap-theme.css" rel="stylesheet">
     <link href="css/font-awesome.css" rel="stylesheet">
 
+    <style>
+     .form-control-inline {
+        min-width: 0;
+        width: auto;
+        display: inline;
+        border: 0; 
+    }   
+    </style>
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -45,13 +53,17 @@
             
       
                 <script type="text/template" id="search-list-template">
-                    <li class="list-group-item" data-id="<%= id %>"><%= search %>
-                        <span class="pull-right">
+                    <li class="list-group-item" data-id="<%= id %>">
+                    <span class="list-item-text" data-id="<%= id %>">
+                    <%= search %>
+                    </span>
+                        <span class="pull-right" data-id="<%= id %>">
                             <button class="btn btn-xs btn-info delete_search" data-id="<%= id %>">DEL</button>
                         </span>
+                    </li>
                 </script>
            
-             
+    
      </div>
         
     </div>

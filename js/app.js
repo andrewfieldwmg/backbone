@@ -22,6 +22,8 @@ var SearchListView = Backbone.View.extend({
     this.collection = new SearchCollection();
 
     //this.listenTo(this.collection, "add", this.render);
+    
+    $(document).bind('click', this.doEdit);
 
   },
   render: function(){
@@ -66,11 +68,13 @@ var SearchListView = Backbone.View.extend({
     },
     
     events: {
-        "click .delete_search" : "doDelete"
+        "click .delete_search" : "doDelete",
+        "click .list-item-text" : "activateInlineEdit",
+        "click .inline-edit" : "doInlineEdit"
     },
     
     doDelete: function(event) {
-
+        event.stopPropagation();
         var self = this;
         var clicked_id = $(event.currentTarget).data('id');
 
@@ -78,9 +82,66 @@ var SearchListView = Backbone.View.extend({
             id: clicked_id
         });
        
-        model.destroy();
-        $('.list-group-item[data-id="' + clicked_id + '"').remove();
-           
+         model.destroy({
+            success: function(model, response) {
+                self.render();
+        }});
+    
+    },
+    
+    activateInlineEdit: function(event) {
+        
+        event.stopPropagation();
+     
+        //var self = this;
+        var clicked_id = $(event.currentTarget).data('id');
+ 
+        var get_search = new SearchModel({id: clicked_id});
+        
+        var result = get_search.fetch({
+       
+            success: function (get_search, response) {
+              
+             var current_text = response.search;
+             
+             $('span.list-item-text[data-id="' + clicked_id + '"]')
+             .html('<input type="text" class="form-control-inline inline-edit" data-id="' + clicked_id + '" value="' + current_text + '">');
+            
+             $('.inline-edit[data-id="' + clicked_id + '"]').focus();
+             
+             localStorage.setItem("last-data-id-edited", clicked_id);
+            
+           }
+        
+        }).done(function(get_search, response) {
+ 
+        });
+            
+    },
+    
+      doInlineEdit: function(event) {
+        event.stopPropagation();
+        
+    },
+    
+     doEdit: function(event) {
+        //event.stopPropagation();
+        
+        var last_data_id_edited = localStorage["last-data-id-edited"];
+        var search_term = $('.inline-edit[data-id="' + last_data_id_edited + '"]').val();
+        
+        var edit_search = new SearchModel();
+        
+        edit_search.save({id: last_data_id_edited, search : search_term}, {
+        success: function (edit_search, response) {
+     
+            var search_list_view = new SearchListView();
+            search_list_view.render();
+
+            }
+        })
+        
+        
     }
       
 });
@@ -97,7 +158,7 @@ var SearchView = Backbone.View.extend({
 
         this.render();
         
-        var search_list_view = new SearchListView({ el: $("#search_list_container") });
+        var search_list_view = new SearchListView();
         search_list_view.render();
 
     },
@@ -112,6 +173,7 @@ var SearchView = Backbone.View.extend({
     },
     
     doSearch: function(event) {
+        
         event.preventDefault();
 
             var search_term = $("#search_input").val();
@@ -124,8 +186,10 @@ var SearchView = Backbone.View.extend({
 
                 self.collection.add(new_search);
          
-                var search_list_view = new SearchListView({ el: $("#search_list_container") });
+                var search_list_view = new SearchListView();
                 search_list_view.render();
+                
+                $("#search_input").val('');
 
                 }
             })
