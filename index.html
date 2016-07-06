@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Bootstrap 101 Template</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/bootstrap-theme.css" rel="stylesheet">
+    <link href="css/font-awesome.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+
+  
+  <div class="container-fluid">
+    
+    <div class="row">
+        
+        <div class="col-sm-4">
+            
+            <div id="search_container"></div>
+            
+            <script type="text/template" id="search_template">
+                <form class="form-inline" id="submit_search" action="">                   
+                    <div class="input-group input-group-lg">
+                      <input type="text" class="form-control" id="search_input">
+                      <span class="input-group-btn">
+                        <button class="btn btn-primary" id="search_button" type="submit">Submit</button>
+                      </span>
+                    </div>
+                </form> 
+            </script>
+            
+            <ul class="list-group" id="search_list_container"></ul>
+            
+      
+                <script type="text/template" id="search-list-template">
+                    <li class="list-group-item" data-id="<%= id %>"><%= search %>
+                        <span class="pull-right">
+                            <button class="btn btn-xs btn-info delete_search" data-id="<%= id %>">DEL</button>
+                        </span>
+                </script>
+           
+             
+     </div>
+        
+    </div>
+  
+</div>
+
+
+    <!-- JavaScript -->
+    <script src="js/jquery-2.0.3.min.js"></script>
+    <script src="js/underscore.js"></script>
+    <script src="js/backbone.js"></script>  
+    <script src="js/app.js"></script>
+    <script src="js/bootstrap.js"></script>  
+  </body>
+</html>
