@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <title>Bootstrap 101 Template</title>
+    <title>Backbone | Tasks</title>
 
     <!-- Bootstrap -->
     <link href="css/bootstrap.css" rel="stylesheet">
@@ -15,11 +15,15 @@
     <style>
      .form-control-inline {
         min-width: 0;
-        width: auto;
+        width: 90%;
         display: inline;
         border: 0; 
-    }   
+    }
+    .task-td {
+        vertical-align: middle!important;
+    }
     </style>
+    
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -30,52 +34,79 @@
   <body>
 
   
-  <div class="container-fluid">
+<div class="container-fluid">
     
     <div class="row">
         
-        <div class="col-sm-4">
+        <div class="col-sm-8">
             
-            <div id="search_container"></div>
+            <div id="task_container"></div>
             
-            <script type="text/template" id="search_template">
-                <form class="form-inline" id="submit_search" action="">                   
+            <script type="text/template" id="task_template">
+                <form class="form" id="submit_task" action="">                   
                     <div class="input-group input-group-lg">
-                      <input type="text" class="form-control" id="search_input">
+                      <input type="text" class="form-control onehundred" id="task_input" placeholder="What needs to be done?">
                       <span class="input-group-btn">
-                        <button class="btn btn-primary" id="search_button" type="submit">Submit</button>
+                        <button class="btn btn-primary" id="task_button" type="submit">Submit</button>
                       </span>
                     </div>
                 </form> 
             </script>
             
-            <ul class="list-group" id="search_list_container"></ul>
+        <table class="table table-bordered table-striped">
+          <tbody id="task_list_container"><tbody>
+        </table>
             
-      
-                <script type="text/template" id="search-list-template">
-                    <li class="list-group-item" data-id="<%= id %>">
-                    <span class="list-item-text" data-id="<%= id %>">
-                    <%= search %>
-                    </span>
-                        <span class="pull-right" data-id="<%= id %>">
-                            <button class="btn btn-xs btn-info delete_search" data-id="<%= id %>">DEL</button>
-                        </span>
-                    </li>
-                </script>
-           
-    
-     </div>
+    <script type="text/template" id="task-list-template">
+        <tr>
+            
+        <td class="task-td" data-id="<%= id %>">
+                    
+            <% if(status == 1) { %>
+                <strike style="opacity: 0.4">
+            <% } %>
+                
+                <span class="list-item-text" data-id="<%= id %>">
+                <%= task %>
+                </span>
+            
+            <% if(status == 1) { %>
+                <i class="fa fa-check"></i>
+                </strike>
+            <% } %>
+            
+        </td>
+        
+        <td data-id="<%= id %>" style="width: 8px">
+            <div class="dropdown">
+              <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                Action
+                <span class="caret"></span>
+              </button>
+              
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                <li><a href="#" class="dropdown-item complete_task" data-id="<%= id %>">Complete</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="#" class="dropdown-item delete_task" data-id="<%= id %>">Delete</a></li>
+              </ul>
+            </div>
+            </td>
+        </tr>
+        
+        </script>
+
+        </div>
         
     </div>
   
 </div>
-
 
     <!-- JavaScript -->
     <script src="js/jquery-2.0.3.min.js"></script>
     <script src="js/underscore.js"></script>
     <script src="js/backbone.js"></script>  
     <script src="js/app.js"></script>
-    <script src="js/bootstrap.js"></script>  
+    <script src="js/bootstrap.js"></script>
+    
   </body>
 </html>

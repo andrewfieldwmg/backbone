@@ -42,15 +42,14 @@ switch ($method) {
 }
  
 // excecute SQL statement
-$result = mysqli_query($link,$sql);
+$result = mysqli_query($link, $sql);
  
 // die if SQL statement failed
 if (!$result) {
     
   http_response_code(404);
-  
   die(mysqli_error());
-  echo json_encode($sql);
+  //echo json_encode($sql);
   
 }
  
@@ -73,6 +72,6 @@ if ($method == 'GET') {
     
   echo mysqli_affected_rows($link);
 }
- 
+
 // close mysql connection
 mysqli_close($link);
