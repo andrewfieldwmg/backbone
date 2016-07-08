@@ -1,6 +1,5 @@
 var TaskModel = Backbone.Model.extend({
     urlRoot: '../api/api.php/tasks'
-
 });
 
 
@@ -136,7 +135,7 @@ var TaskListView = Backbone.View.extend({
        
             success: function (get_task, response) {
               
-             var current_text = response.task;
+             var current_text = response.name;
              
              $('span.list-item-text[data-id="' + clicked_id + '"]')
              .html('<input type="text" class="form-control-inline inline-edit" data-id="' + clicked_id + '" value="' + current_text + '">');
@@ -146,8 +145,6 @@ var TaskListView = Backbone.View.extend({
             
            }
         
-        }).done(function(get_task, response) {
- 
         });
             
     },
@@ -163,14 +160,12 @@ var TaskListView = Backbone.View.extend({
         var last_data_id_edited = localStorage["last-task-edited"];
         
         if (last_data_id_edited) {
-                
-            console.log('do edit');
-        
+    
             var task_term = $('.inline-edit[data-id="' + last_data_id_edited + '"]').val();
             
             var edit_task = new TaskModel();
             
-            edit_task.save({id: last_data_id_edited, task : task_term}, {
+            edit_task.save({id: last_data_id_edited, name : task_term}, {
             success: function (edit_task, response) {
          
                 new TaskListView();
@@ -245,17 +240,15 @@ var TaskView = Backbone.View.extend({
         
         event.preventDefault();
         
-        console.log('add task fired');
-
             var new_task = $("#task_input").val();
             var self = this;
             
             this.model.save({
-                task: new_task,
+                name: new_task,
                 status: 0,
                 task_list: localStorage["selected_task_list"]}, {
                 
-            success: function (task, response) {
+            success: function (name, response) {
                 
                 //var new_task = new TaskModel({id: response,
                 //                             task: new_task,
@@ -284,6 +277,7 @@ var TaskSelectorView = Backbone.View.extend({
         
     initialize: function(){
         
+        this.model = new TaskSelectorModel(); 
         this.collection = new TaskSelectorCollection();     
         this.render();
 
@@ -303,24 +297,93 @@ var TaskSelectorView = Backbone.View.extend({
     },
     
     events: {
-        "change #task-list-select": "doChangeTaskList"
+        "change #task-list-select": "doChangeTaskList",
+        "click .open-create-list-input": "doCreateTaskListInput",
+        "click .submit-new-list": "doCreateTaskList",
+        "click .delete-list": "doDeleteTaskList"
     },
     
     doChangeTaskList: function(event) {
         
         event.preventDefault();
         var selected_list = $(event.currentTarget).find(":selected").val();
+        var selected_list_id = $(event.currentTarget).find(":selected").data("id");
         
-        if (selected_list) {
-            var do_init = true;
-        } else {
+        if (selected_list == 'create_new_list') {
             var do_init = false;
+        } else if (!selected_list) {  
+            var do_init = false;
+        } else {
+            var do_init = true;
         }
-        //console.log('change task list: ' + selected_list);
+ 
+        $('.delete-list').attr('data-id', selected_list_id);
+        
         localStorage.setItem("selected_task_list", selected_list);
          
         new TaskView({do_init: do_init});
         new TaskListView();
+
+    },
+        
+    doCreateTaskListInput: function(event) {
+        
+        event.preventDefault();
+        event.stopPropagation();
+        
+        console.log('new list');
+    
+        $(event.currentTarget)
+        .replaceWith('<input type="text" class="form-control-inline new-list-name" placeholder="Enter name..."><input type="submit" class="submit-new-list pull-right form-inline" value="Submit">');
+        
+        $('.new-list-name').focus();
+    
+    },
+    
+    doCreateTaskList: function(event) {
+        
+        event.preventDefault();
+        event.stopPropagation();
+        
+        var new_list_name = $(".new-list-name").val();
+        
+        console.log('submit new list: ' + new_list_name);
+        
+        var self = this;
+
+           this.model.save({
+                name: new_list_name}, {
+                
+            success: function (name, response) {
+            
+                self.render();
+             
+
+                }
+            });
+
+    },
+    
+    doDeleteTaskList: function(event) {
+        
+        event.preventDefault();
+        event.stopPropagation();
+        
+        var list_id = $(event.currentTarget).data('id');
+        
+        console.log(list_id);
+        
+        var self = this;
+        
+        var model = new TaskSelectorModel({
+            id: list_id
+        });
+       
+         model.destroy({
+            success: function(model, response) {
+                self.render();
+                   new TaskView({do_init: false});
+        }});
 
     }
     
