@@ -53,15 +53,12 @@ var TaskListView = Backbone.View.extend({
     
     beforeRender: function () {
         
-        console.log('before render');
         this.undelegateEvents();
 	this.$el.removeData().unbind();
         
     },
 		
     afterRender: function () {
-        
-        console.log('after render');
         
         var compiledTemplate = _.template( $("#task-list-template").html());
         var self = this;    
@@ -72,9 +69,7 @@ var TaskListView = Backbone.View.extend({
                     self.collection.each(function(task){
         
                           var html = compiledTemplate(task.toJSON());
-                            
-                            console.log(task.toJSON().task_list);
-                      
+                        
                             if (task.toJSON().task_list == localStorage["selected_task_list"]) {              
                                 results.push(html);             
                             }
@@ -196,18 +191,29 @@ var TaskView = Backbone.View.extend({
     
     el: $("#task_container"),
     
-    initialize: function(){
+    initialize: function(options){
 
         this.model = new TaskModel();
         this.collection = new TaskCollection();
-    
-        this.render = _.wrap(this.render, function(render) {
-				this.beforeRender();
-				render();						
-				this.afterRender();
-			});						
-			
-	this.render();
+             
+        var do_init = options.do_init;
+
+        if (do_init == true) {
+
+            this.$el.show();
+            this.render = _.wrap(this.render, function(render) {
+                                    this.beforeRender();
+                                    render();						
+                                    this.afterRender();
+                            });						
+                            
+            this.render();
+            
+        } else {
+            
+            this.$el.hide();
+        }
+
 
     },
     
@@ -219,15 +225,13 @@ var TaskView = Backbone.View.extend({
     
     beforeRender: function () {
         
-        //console.log('before render');
         this.undelegateEvents();
 	this.$el.removeData().unbind();
         
     },
 		
     afterRender: function () {
-        
-	//console.log('after render');		    
+	
         var template = _.template( $("#task_template").html());
         this.$el.html( template );
     
@@ -307,10 +311,15 @@ var TaskSelectorView = Backbone.View.extend({
         event.preventDefault();
         var selected_list = $(event.currentTarget).find(":selected").val();
         
+        if (selected_list) {
+            var do_init = true;
+        } else {
+            var do_init = false;
+        }
         //console.log('change task list: ' + selected_list);
         localStorage.setItem("selected_task_list", selected_list);
          
-        new TaskView();
+        new TaskView({do_init: do_init});
         new TaskListView();
 
     }

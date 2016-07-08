@@ -44,10 +44,10 @@
  
         <script type="text/template" id="task_selector_template">
            <div class="form-group">
-               <label>Task List:</label>
                  <select class="form-control" id="task-list-select">
+                     <option value="">Please select task list...</option>
                     <% _.each(collection, function(model){ %>
-                        <option value="<%= model.name %>"><%= model.name %></option>
+                        <option value="<%= model.name %>"><%= model.name %> Tasks</option>
                    <% }); %>
                  </select>
            </div>
