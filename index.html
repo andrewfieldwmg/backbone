@@ -40,6 +40,20 @@
         
         <div class="col-sm-8">
             
+ <div id="task_selector_container"></div>
+ 
+        <script type="text/template" id="task_selector_template">
+           <div class="form-group">
+               <label>Task List:</label>
+                 <select class="form-control" id="task-list-select">
+                    <% _.each(collection, function(model){ %>
+                        <option value="<%= model.name %>"><%= model.name %></option>
+                   <% }); %>
+                 </select>
+           </div>
+           
+        </script>
+            
             <div id="task_container"></div>
             
             <script type="text/template" id="task_template">

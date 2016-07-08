@@ -73,5 +73,6 @@ if ($method == 'GET') {
   echo mysqli_affected_rows($link);
 }
 
+
 // close mysql connection
 mysqli_close($link);
