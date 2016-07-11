@@ -1,3 +1,9 @@
+function pad(n, width, z) {
+  z = z || '0';
+  n = n + '';
+  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}
+
 var TaskModel = Backbone.Model.extend({
     urlRoot: '../api/api.php/tasks'
 });
@@ -20,6 +26,74 @@ var TaskSelectorCollection = Backbone.Collection.extend({
 });
 
 
+var TaskListChildFormView = Backbone.View.extend({
+
+  el: $("#task_list_container"),
+
+  tagName: "tbody",
+      
+  initialize: function(options){
+    
+        this.model = new TaskModel();
+        this.collection = new TaskCollection();
+    
+        this.parent_row_id = options.parent_row_id;
+        
+        this.render();
+  },
+  
+  render: function() {
+    
+        console.log( 'Iinside child view render ' + this.parent_row_id);
+        
+        var parent_row = $('.task-tr[data-id="' + this.parent_row_id + '"]');
+    
+        var parameters = {parent_row_id: this.parent_row_id };
+        
+        var compiledTemplate = _.template( $("#task-child-list-form-template").html(), parameters);
+        parent_row.after(compiledTemplate);
+
+  },
+  
+  events: {
+
+    "submit #submit-child-task": "addChildTask"
+  },
+  
+  addChildTask: function(event) {
+    
+    event.preventDefault();
+
+    var parent_id = $(event.currentTarget).data('parent-id');
+    
+    var new_child_task = $('.child-task-text[data-parent-id="' + parent_id + '"]').val();
+    var self = this;
+    
+    var day_month = new Date().toDateString().substring(4);
+    
+        this.model.save({
+            name: new_child_task,
+            status: 0,
+            task_list: localStorage["selected-task-list"],
+            priority: 99,
+            created: day_month,
+            parent_id: parent_id
+            },
+            {
+            
+        success: function (response) {
+        
+            //new TaskListView();
+            console.log(response);
+
+            }
+            
+        });
+        
+  }
+  
+});
+  
 
 var TaskListView = Backbone.View.extend({
 
@@ -63,7 +137,7 @@ var TaskListView = Backbone.View.extend({
         
         var compiledTemplate = _.template( $("#task-list-template").html());
         var self = this;    
-        var results = [];
+        var parent_task_list = [];
         
         this.collection.comparator = function( model ) {
           return model.get('priority');
@@ -77,14 +151,17 @@ var TaskListView = Backbone.View.extend({
         
                           var html = compiledTemplate(task.toJSON());
                         
-                            if (task.toJSON().task_list == localStorage["selected_task_list"]) {              
-                                results.push(html);             
+                            if (task.toJSON().task_list == localStorage["selected-task-list"]) {              
+                                
+                                if(!task.toJSON().parent_id) {
+                                    parent_task_list.push(html);             
+                                }
                             }
                                            
                         });
             
-                    self.$el.html(results).sortable({
-            
+                    self.$el.html(parent_task_list).sortable({
+                            
                             start: function(event, ui) {
                                 var start_pos = ui.item.index();
                                 ui.item.data('start_pos', start_pos);
@@ -103,11 +180,12 @@ var TaskListView = Backbone.View.extend({
                                         $(ui.item).siblings().andSelf().each(function() {
 
                                         var item_id = $(this).attr('data-id');
-                                        var end_pos = $(this).index();
+                                        var end_pos = $(this).index() + 1;
+                                        var end_pos_round = pad(end_pos, 2);
                                             
                                                 var task_model = new TaskModel();
                                         
-                                                task_model.save({id: item_id, priority : end_pos + 1}, {
+                                                task_model.save({id: item_id, priority : end_pos_round }, {
                                                 success: function (task_model, response) {
                                                 
                                                     //console.log(response);
@@ -134,11 +212,14 @@ var TaskListView = Backbone.View.extend({
     events: {
         "click .complete_task" : "doComplete",
         "click .delete_task" : "doDelete",
+         "click .add-sub-task" : "doAddSubTask",
         "click .list-item-text" : "activateInlineEdit",
         "click .inline-edit" : "doInlineEdit"
     },
     
       doComplete: function(event) {
+        
+        console.log('complete');
         
         event.stopPropagation();
         var self = this;
@@ -152,7 +233,7 @@ var TaskListView = Backbone.View.extend({
         complete_task.save({id: clicked_id, status: 1}, {
         success: function (complete_task, response) {
      
-                new TaskListView();
+                self.render();
 
             }
         })
@@ -161,7 +242,10 @@ var TaskListView = Backbone.View.extend({
     
     doDelete: function(event) {
         
+        console.log('delete');
+        
         event.stopPropagation();
+        
         var self = this;
         var clicked_id = $(event.currentTarget).data('id');
 
@@ -171,9 +255,26 @@ var TaskListView = Backbone.View.extend({
        
          model.destroy({
             success: function(model, response) {
-                new TaskListView();
-        }});
+             
+                self.render();
+        }
+        
+        });
     
+    },
+    
+    doAddSubTask: function(event) {
+        
+        console.log('add sub task');
+        event.stopPropagation();
+        
+        var clicked_id = $(event.currentTarget).data('id');
+        console.log(clicked_id);
+        
+        new TaskListChildFormView({parent_row_id: clicked_id});
+        
+        
+        $('.child-task-text').focus();
     },
     
     activateInlineEdit: function(event) {
@@ -298,7 +399,7 @@ var TaskView = Backbone.View.extend({
             this.model.save({
                 name: new_task,
                 status: 0,
-                task_list: localStorage["selected_task_list"],
+                task_list: localStorage["selected-task-list"],
                 created: day_month},
                 {
                 
@@ -355,14 +456,23 @@ var TaskSelectorView = Backbone.View.extend({
         
         }).done(function() {
             
-                if (localStorage["new_task_list"]) {
+                if (localStorage["new-task-list"]) {
                     
-                    $('#task-list-select').val(localStorage["new_task_list"]).change()
+                    $('#task-list-select').val(localStorage["new-task-list"]).change()
                     .promise().done(function() {
-                        localStorage.setItem("new_task_list", "");
+                        localStorage.setItem("new-task-list", "");
                     });
     
+                } else if (localStorage["selected-task-list"]) {
+                    
+                    $('#task-list-select').val(localStorage["selected-task-list"]).change();
+    
+                } else {
+                    
+                    $('#task-list-select').val("select_list").change();
                 }
+                
+            
             
             });
            
@@ -396,7 +506,7 @@ var TaskSelectorView = Backbone.View.extend({
  
         $('.delete-list').attr('data-id', selected_list_id);
         
-        localStorage.setItem("selected_task_list", selected_list);
+        localStorage.setItem("selected-task-list", selected_list);
          
         new TaskView({do_init: do_init});
         new TaskListView();
@@ -429,7 +539,7 @@ var TaskSelectorView = Backbone.View.extend({
                 
             success: function (name, response) {
             
-                localStorage.setItem("new_task_list", new_list_name);
+                localStorage.setItem("new-task-list", new_list_name);
                 self.render();
         
                 }
@@ -452,6 +562,7 @@ var TaskSelectorView = Backbone.View.extend({
        
          model.destroy({
             success: function(model, response) {
+                localStorage.setItem("selected-task-list", "");
                 self.render();
                    new TaskView({do_init: false});
         }});
