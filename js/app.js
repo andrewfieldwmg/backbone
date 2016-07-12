@@ -30,7 +30,7 @@ var TaskListChildFormView = Backbone.View.extend({
 
   el: $("#task_list_container"),
 
-  tagName: "tbody",
+  tagName: "table",
       
   initialize: function(options){
     
@@ -44,14 +44,12 @@ var TaskListChildFormView = Backbone.View.extend({
   
   render: function() {
     
-        console.log( 'Iinside child view render ' + this.parent_row_id);
-        
-        var parent_row = $('.task-tr[data-id="' + this.parent_row_id + '"]');
+        var parent_row = $('tbody[data-id="' + this.parent_row_id + '"]');
     
         var parameters = {parent_row_id: this.parent_row_id };
         
         var compiledTemplate = _.template( $("#task-child-list-form-template").html(), parameters);
-        parent_row.after(compiledTemplate);
+        parent_row.append(compiledTemplate);
 
   },
   
@@ -75,7 +73,7 @@ var TaskListChildFormView = Backbone.View.extend({
             name: new_child_task,
             status: 0,
             task_list: localStorage["selected-task-list"],
-            priority: 99,
+            priority: parent_id + "-" + 0,
             created: day_month,
             parent_id: parent_id
             },
@@ -83,8 +81,8 @@ var TaskListChildFormView = Backbone.View.extend({
             
         success: function (response) {
         
-            //new TaskListView();
-            console.log(response);
+            new TaskListView();
+            //console.log(response);
 
             }
             
@@ -94,12 +92,128 @@ var TaskListChildFormView = Backbone.View.extend({
   
 });
   
+  
+  
+var TaskListChildView = Backbone.View.extend({
+
+  el: $("#task_list_container"),
+
+  tagName: "table",
+      
+  initialize: function(options){
+    
+        this.model = new TaskModel();
+        this.collection = new TaskCollection();
+    
+        this.parent_row_id = options.parent_row_id;
+        
+        this.render();
+  },
+  
+  render: function() {
+       
+
+        var parent_row = $('tbody[data-id="' + this.parent_row_id + '"]');
+
+        var compiledTemplate = _.template( $("#task-child-list-template").html());
+       
+        var self = this;    
+        var child_task_list_html = [];
+	var child_task_list_ids = [];
+	
+	var new_collection = new TaskCollection();
+	
+            new_collection.fetch().done(function() {
+	      
+                    new_collection.each(function(child_task){
+        
+			  var html = compiledTemplate(child_task.toJSON());
+						 
+			 if (child_task.toJSON().task_list == localStorage["selected-task-list"]) {              
+			     
+			      if(child_task.toJSON().parent_id == self.parent_row_id) {
+				 child_task_list_html.push(html);
+				 child_task_list_ids.push(child_task.toJSON().id);
+			      }
+			 }
+                                           
+                        });
+
+      
+		    parent_row.append(child_task_list_html);
+                    
+            });
+
+
+  },
+  
+  events: {
+    
+       "click .complete-sub-task" : "doCompleteSubList",
+      "click .delete-sub-task" : "doDeleteSubList"
+    
+  },
+  
+  addChildTask: function(event) {
+    
+    event.preventDefault();
+
+  },
+  
+    doDeleteSubList: function(event) {
+        
+        console.log('delete');
+        
+        event.stopPropagation();
+        
+        var self = this;
+        var clicked_id = $(event.currentTarget).data('id');
+
+        var model = new TaskModel({
+            id: clicked_id
+        });
+       
+         model.destroy({
+            success: function(model, response) {
+             
+                new TaskListView();
+        }
+        
+        });
+    
+    },
+    
+      doCompleteSubList: function(event) {
+      
+        event.stopPropagation();
+        var self = this;
+        var clicked_id = $(event.currentTarget).data('id');
+
+        $('span.list-item-text[data-id="' + clicked_id + '"]').wrap("<strike>")
+        .fadeTo('slow', 0.4);
+ 
+        var complete_task = new TaskModel();
+        
+        complete_task.save({id: clicked_id, status: 1}, {
+        success: function (complete_task, response) {
+     
+                new TaskListView();
+
+            }
+        })
+    
+    }
+
+  
+});
+  
+  
 
 var TaskListView = Backbone.View.extend({
 
   el: $("#task_list_container"),
 
-  tagName: "tbody",
+  tagName: "table",
       
   initialize: function(){
   
@@ -136,9 +250,11 @@ var TaskListView = Backbone.View.extend({
     afterRender: function () {
         
         var compiledTemplate = _.template( $("#task-list-template").html());
-        var self = this;    
-        var parent_task_list = [];
-        
+        var self = this;
+	var parent_task_list_ids = [];
+        var parent_task_list_html = [];
+        var parent_ids_with_children = [];
+	
         this.collection.comparator = function( model ) {
           return model.get('priority');
         }
@@ -154,14 +270,21 @@ var TaskListView = Backbone.View.extend({
                             if (task.toJSON().task_list == localStorage["selected-task-list"]) {              
                                 
                                 if(!task.toJSON().parent_id) {
-                                    parent_task_list.push(html);             
-                                }
+				    parent_task_list_ids.push(task.toJSON().id);
+                                    parent_task_list_html.push(html);             
+                                } else {
+				    parent_ids_with_children.push(task.toJSON().parent_id);
+				}
                             }
                                            
                         });
             
-                    self.$el.html(parent_task_list).sortable({
-                            
+                    self.$el.html(parent_task_list_html);
+		    
+		    $("table").sortable({
+		      
+			    items: 'tbody',
+			    
                             start: function(event, ui) {
                                 var start_pos = ui.item.index();
                                 ui.item.data('start_pos', start_pos);
@@ -180,27 +303,42 @@ var TaskListView = Backbone.View.extend({
                                         $(ui.item).siblings().andSelf().each(function() {
 
                                         var item_id = $(this).attr('data-id');
-                                        var end_pos = $(this).index() + 1;
-                                        var end_pos_round = pad(end_pos, 2);
-                                            
-                                                var task_model = new TaskModel();
-                                        
-                                                task_model.save({id: item_id, priority : end_pos_round }, {
-                                                success: function (task_model, response) {
-                                                
-                                                    //console.log(response);
-                               
-                                                    }
-                                                });
-                                        });
-                                        
+					
+					var item_class = $(this).attr('class');
+					
+				  
+					    var end_pos = $(this).index() + 1;
+					    var end_pos_round = pad(end_pos, 2);
+						
+						    var task_model = new TaskModel();
+					    
+						    task_model.save({id: item_id, priority : end_pos_round }, {
+						    success: function (task_model, response) {
+						    
+							//console.log(response);
+				   
+							}
+						    });
+					    
                                           
+					  });
+					
                                         new TaskListView();
                                  
                             }
                         
                         
                         });
+		    
+	      
+		  // render the sub task lists
+		  var unique_array = Array.from(new Set(parent_ids_with_children));
+		  
+		  var arrayLength = unique_array.length;
+		  for (var i = 0; i < arrayLength; i++) {
+		      new TaskListChildView({parent_row_id: unique_array[i]});
+		  }
+
                     
             });
         
@@ -210,11 +348,20 @@ var TaskListView = Backbone.View.extend({
     },
   
     events: {
+	 "hover .dropdown" : "doOpenActions",
         "click .complete_task" : "doComplete",
         "click .delete_task" : "doDelete",
          "click .add-sub-task" : "doAddSubTask",
         "click .list-item-text" : "activateInlineEdit",
         "click .inline-edit" : "doInlineEdit"
+    },
+    
+     doOpenActions: function(event) {
+        
+        console.log('open actions');
+        
+        event.stopPropagation();
+    
     },
     
       doComplete: function(event) {
@@ -265,14 +412,11 @@ var TaskListView = Backbone.View.extend({
     
     doAddSubTask: function(event) {
         
-        console.log('add sub task');
         event.stopPropagation();
         
         var clicked_id = $(event.currentTarget).data('id');
-        console.log(clicked_id);
         
         new TaskListChildFormView({parent_row_id: clicked_id});
-        
         
         $('.child-task-text').focus();
     },

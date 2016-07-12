@@ -38,13 +38,16 @@
      margin-top: 3px;
     }
     .task-child {
-        zoom: 0.9;
+        zoom: 0.85;
     }
     .full-width {
         width: 100%;
     }
     .child-task-text {
         height: 113%;
+    }
+    .margin-left-10 {
+      margin-left: 20px;
     }
     </style>
     
@@ -107,18 +110,21 @@
                 </form> 
             </script>
             
-        <table class="table table-bordered table-striped">
-          <tbody id="task_list_container"><tbody>
+        <table class="table table-bordered table-striped" id="task_list_container">
+
         </table>
             
+            
     <script type="text/template" id="task-list-template">
-        
+      
+        <tbody class="task-tr" data-id="<%= id %>" data-toggle="tooltip" data-placement="top" title="Drag + drop to change priority!">
+          
         <tr class="task-tr" data-id="<%= id %>" data-toggle="tooltip" data-placement="top" title="Drag + drop to change priority!">
             
         <td class="task-priority-td td-centre" data-id="<%= id %>"><%= priority %></td>
          <td class="task-created-td td-centre" data-id="<%= id %>"><%= created %></td>
         
-        <td class="task-td td-centre" data-id="<%= id %>">
+        <td colspan="2" class="task-td td-centre" data-id="<%= id %>">
                     
             <% if(status == 1) { %>
                 <strike style="opacity: 0.4">
@@ -152,43 +158,55 @@
             </td>
             
         </tr>
+  </tbody>
   
-        </script>
+        
+  </script>
     
     
       <script type="text/template" id="task-child-list-template">
-        
-            <tr class="task-tr task-child" data-parent-id="" data-id="">
+    
+            <tr class="task-tr task-child" data-parent-id="<%= parent_id%>" data-id="<%= id %>">
                 
                 <td></td>
-                
-                    <td class="task-priority-td td-centre td-centre task-child" data-parent-id="" data-id="">
-    
+                 <td></td>
+                    <td class="task-priority-td td-centre td-centre task-child" data-parent-id="<%= parent_id%>" data-id="<%= id %>">
+           
                     </td>
                     
-            <td class="task-td td-centre task-child" data-parent-id="" data-id="">
+            <td class="task-td td-centre task-child" data-parent-id="<%= parent_id%>" data-id="<%= id %>">
                              
-                <span class="child-list-item-text" data-parent-id="" data-id="">
+            <% if(status == 1) { %>
+                <strike style="opacity: 0.4">
+            <% } %>
+                
+                <span class="child-list-item-text" data-parent-id="<%= parent_id%>" data-id="<%= id %>">
+                <%= name %>
                 </span>
+            
+            <% if(status == 1) { %>
+                <i class="fa fa-check"></i>
+                </strike>
+            <% } %>
             
             </td>
                     
                     <td class="task-child" data-parent-id="" data-id="" style="width: 8px">
-                        <div class="dropdown">
+                        <div class="dropdown margin-left-10">
                           <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                             Action
                             <span class="caret"></span>
                           </button>
                           
                           <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                            <li><a href="#" class="dropdown-item complete_task" data-parent-id="" data-id="">Complete</a></li>
+                            <li><a href="#" class="dropdown-item complete-sub-task" data-parent-id="<%= parent_id%>" data-id="<%= id %>">Complete</a></li>
                             <li role="separator" class="divider"></li>
-                            <li><a href="#" class="dropdown-item delete_task" data-parent-id="" data-id="">Delete</a></li>
+                            <li><a href="#" class="dropdown-item delete-sub-task" data-parent-id="<%= parent_id%>" data-id="<%= id %>">Delete</a></li>
                           </ul>
                         </div>
                     </td> 
             </tr>
-        
+     
         </script>
       
     
@@ -196,11 +214,9 @@
             
                 <tr class="task-tr task-child" data-parent-id="<%= parent_row_id%>" data-id="">
                 
-                <td></td>
-                
-                    <td class="task-priority-td td-centre td-centre task-child" data-parent-id="<%= parent_row_id%>" data-id="">
-    
-                    </td>
+                 <td></td>
+                 <td></td>
+                 <td></td>
                     <td class="task-td td-centre task-child" data-parent-id="<%= parent_row_id%>" data-id="">
                       
                         
@@ -216,7 +232,7 @@
                     </td>
                     
                     <td class="task-child" data-parent-id="<%= parent_row_id%>" data-id="" style="width: 8px">
-                        <div class="dropdown">
+                        <div class="dropdown margin-left-10">
                           <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                             Action
                             <span class="caret"></span>
@@ -246,6 +262,6 @@
     <script src="js/app.js"></script>
     <script src="js/bootstrap.js"></script>
     <script src="js/jquery-ui.js"></script>
-    
+    <script src="js/jquery.multisortable/src/jquery.multisortable.js"></script>
   </body>
 </html>
